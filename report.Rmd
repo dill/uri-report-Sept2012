@@ -1,5 +1,6 @@
 `r opts_chunk$set(fig.width=4, fig.height=4, fig.path='report-figs/', cache.path='report-cache/',echo=FALSE,results='hide',dev='pdf')`
 
+
 ``` {r preamble}
 suppressPackageStartupMessages(library(ggplot2))
 suppressPackageStartupMessages(library(grid))
@@ -44,7 +45,7 @@ this.species <- "Alcid"
 this.obs <- obs[obs$Group==this.species,]
 ```
 
-# `r this.species`
+<title>`r this.species`</title>
 
 ```{r sightings-by-season, fig.cap="Sightings by season"}
 season.plot<-list()
