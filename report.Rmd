@@ -1,0 +1,149 @@
+`r opts_chunk$set(fig.width=4, fig.height=4, fig.path='report-figs/', cache.path='report-cache/',echo=FALSE,results='hide',dev='pdf')`
+
+``` {r preamble}
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(grid))
+suppressPackageStartupMessages(library(gridExtra))
+#library(vcd)
+
+load("uri-lt-data.RData")
+
+# colours for the seasons
+season.cols<-c("Winter" = rgb(166, 189, 219,max=255),
+               "Summer" = rgb(254, 196, 79,max=255),
+               "Spring" = rgb(49, 163, 84,max=255),
+               "Fall" = rgb(227, 74, 51,max=255))
+```
+
+``` {r ggplot-geo-opts}
+point.colour <- rgb(206, 18, 86,max=255)
+land.colour <- rgb(44, 162, 95,max=255)
+sea.colour <- rgb(43,140,190,max=255)
+
+p.opts <- opts(panel.grid.major=theme_blank(), 
+               panel.grid.minor=theme_blank(), 
+               panel.background=theme_rect(fill=sea.colour,colour=NA),
+               strip.background=theme_blank(),
+               legend.key=theme_blank(),
+               axis.ticks=theme_blank(),
+               axis.text.x=theme_blank(),
+               axis.text.y=theme_blank(),
+               axis.title.x=theme_blank(),
+               axis.title.y=theme_blank(),
+               axis.ticks.margin=unit(0,"npc"),
+               axis.ticks.length=unit(0,"npc"),
+               aspect.ratio=1
+              ) 
+coord <- coord_cartesian(xlim = c(-40,40),ylim = c(-40,40))
+```
+
+``` {r species-choice}
+this.species <- "Alcid"
+
+# want to wrap this up in a loop one for each species
+this.obs <- obs[obs$Group==this.species,]
+```
+
+# `r this.species`
+
+```{r sightings-by-season, fig.cap="Sightings by season"}
+season.plot<-list()
+
+# legend options
+all.quants <- unique(quantile(unique(this.obs$size),seq(0,1,0.2)))
+point.range <- c(1,4)
+scales <- scale_size_continuous(breaks=all.quants,range=point.range)
+
+# make a unified legend
+p.leg <- ggplot(this.obs)
+p.leg <- p.leg + geom_point(aes(x=x,y=y,size=size),colour=point.colour)
+p.leg <- p.leg + opts(keep = "legend_box",legend.position="bottom")
+p.leg <- p.leg + labs(size="Group\nsize")
+p.leg <- p.leg + scales + p.opts
+g_legend<-function(a.gplot){
+  tmp <- ggplot_gtable(ggplot_build(a.gplot))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  legend <- tmp$grobs[[leg]]
+  return(legend)
+}
+legend<-g_legend(p.leg)
+rm(p.leg)
+
+# build the 4 seasonal plots
+for(i in seq_along(names(season.cols))){
+  this.season <- this.obs[this.obs$Season==names(season.cols)[i],]
+  if(nrow(this.season)>0){
+    p <- ggplot(this.season)
+    p <- p + geom_polygon(aes(x=x,y=y,group=group),
+                               colour=NA,fill=season.cols[i],data=coast) 
+    p <- p + geom_point(aes(x=x,y=y,size=size),colour=point.colour)
+    p <- p + scales
+  }else{
+    p <- ggplot(coast)
+    p <- p + geom_polygon(aes(x=x,y=y,group=group),
+                              colour=NA,fill=season.cols[i]) 
+  }  
+  p <- p + p.opts + xlab("") + ylab("") + coord + opts(legend.position = "none") 
+  p<-p+opts(plot.margin = unit(c(-1,0,-1,1), "lines"))
+
+  season.plot[[i]]<-p
+}
+
+# actually plot them
+grid.arrange(arrangeGrob(season.plot[[1]],season.plot[[2]],
+             season.plot[[3]],season.plot[[4]]),
+             legend,nrow=2,
+             heights=unit.c(unit(1, "npc") - legend$height, legend$height))
+```
+
+``` {r distance-hists, fig.cap="Observed distances"}
+p.opts <- opts(panel.grid.major=theme_blank(), 
+               panel.grid.minor=theme_blank(), 
+               panel.background=theme_blank(),
+               strip.background=theme_blank(),
+               legend.key=theme_blank(),
+               aspect.ratio=1
+              ) 
+p <- ggplot(this.obs)
+p <- p + geom_histogram(aes(x=Bin,fill=Season))
+p <- p + scale_color_manual(values=season.cols)
+p <- p + p.opts + ylab("Number of observed groups")
+p <- p+ opts(legend.position="bottom")
+print(p)
+```
+
+
+
+``` {r groupsize-boxplot, fig.cap="Group size by season"}
+
+p <- ggplot(this.obs)
+p <- p + geom_boxplot(aes(x=Season,y=size)) 
+p <- p + p.opts + ylab("Observed group size") + xlab("")
+print(p)
+```
+
+``` {r sitting-flying, fig.cap="Sitting vs. flying"} 
+p <- ggplot(this.obs)
+p <- p + geom_histogram(aes(x=Bin,fill=Location))
+#p <- p + scale_color_manual(values=season.cols)
+p <- p + p.opts + ylab("Number of observed groups")
+p <- p+ opts(legend.position="bottom")
+print(p)
+```
+
+```{r}
+## counts here means "sightings" not # of birds!
+#
+## group
+#table(obs[,c("Group")])
+#
+### year, season
+#table(obs[,c("Season","Year")])
+#
+#
+#
+### group, season, year
+#table(obs[,c("Season","Year","Group")])
+#
+```
+
