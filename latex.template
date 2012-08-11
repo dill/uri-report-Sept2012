@@ -52,20 +52,6 @@
 %\setlength{\columnsep}{.5in}
 
 
-% I use the special 'komascript' article class "scrartcl" 
-% reasons I can't entirely remember; I'm not sure it's that great.
-% One reason is the unimportant one that, like many classes,
-% it allows very big fonts which are convenient for booklet printing 
-% in the idiotic American way by shrinking letterpaper pages.
-
-% the standard minimal LaTeX 'article' class declaration would be something like:
-
-% \documentclass[12pt]{article} 
-
-% or for big type:
-
-% \documentclass[24pt]{extarticle}
-
 % but these restrict you to old-fashioned LaTeX materials.
 % Note that Kieran Healy uses the swank 'Memoir' class, 
 % \documentclass[11pt,article,oneside]{memoir}
@@ -76,18 +62,8 @@
 % -- We are in swanky unicode, XeTeX land, and must now import these packages:
 \usepackage{fontspec,xltxtra,xunicode}
 % fontspec means we can specify pretty much any font.
-% Because we are using XeTeX material,
-% this template needs to be called with the `--xetex` flag. 
 
-
-% Symbols: 
-% Pandoc imports the extensive `amsmath` collection of symbols 
-% for typesetting ordinary math.  
 \usepackage{amsmath}
-% if you use exotic symbols you need to import specific packages, eg. for
-% electrical engineering diagrams, musical notation, exotic currency symbols,
-% the unspeakable rites of freemasonry etc.
-
 
 % `babel`: 
 % The `babel` package, among other things, lets you determine what 
@@ -105,6 +81,7 @@
 % Here I set my main font, which is an Apple Corporation Exclusive, golly. 
 
 % \setmainfont{Hoefler Text}
+\setmainfont{Helvetica}
 % \setromanfont[Mapping=tex-text,Contextuals={NoWordInitial,NoWordFinal,NoLineInitial,NoLineFinal},Ligatures={NoCommon}]{Hoefler Text}
 
 % Hoefler Text is okay, but note the long discussion of 'contextuals' which is necessary to cools off 
@@ -113,7 +90,7 @@
 % If you have a copy you might try it; as it is
 % I will comment it out and supply something more certain to be around:
 
-\setmainfont{Times Roman}
+%\setmainfont{Times Roman}
 
 % Properly one should specify a sanserif font and a monospace font
 % see e.g. the example of Kieran Healy:
