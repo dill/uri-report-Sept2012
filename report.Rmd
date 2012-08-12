@@ -1,10 +1,10 @@
 `r opts_chunk$set(fig.width=4, fig.height=4, fig.path='report-figs/', cache.path='report-cache/',echo=FALSE,results='hide',dev='pdf')`
 
-
 ``` {r preamble}
 suppressPackageStartupMessages(library(ggplot2))
 suppressPackageStartupMessages(library(grid))
 suppressPackageStartupMessages(library(gridExtra))
+suppressPackageStartupMessages(library(xtable))
 #library(vcd)
 
 load("uri-lt-data.RData")
@@ -21,25 +21,132 @@ point.colour <- rgb(206, 18, 86,max=255)
 land.colour <- rgb(44, 162, 95,max=255)
 sea.colour <- rgb(43,140,190,max=255)
 
-p.opts <- opts(panel.grid.major=theme_blank(), 
-               panel.grid.minor=theme_blank(), 
-               panel.background=theme_rect(fill=sea.colour,colour=NA),
-               strip.background=theme_blank(),
-               legend.key=theme_blank(),
-               axis.ticks=theme_blank(),
-               axis.text.x=theme_blank(),
-               axis.text.y=theme_blank(),
-               axis.title.x=theme_blank(),
-               axis.title.y=theme_blank(),
-               axis.ticks.margin=unit(0,"npc"),
-               axis.ticks.length=unit(0,"npc"),
-               aspect.ratio=1
-              ) 
+p.opts.geo <- opts(panel.grid.major=theme_blank(), 
+                   panel.grid.minor=theme_blank(), 
+                   panel.background=theme_rect(fill=sea.colour,colour=NA),
+                   strip.background=theme_blank(),
+                   legend.key=theme_blank(),
+                   axis.ticks=theme_blank(),
+                   axis.text.x=theme_blank(),
+                   axis.text.y=theme_blank(),
+                   axis.title.x=theme_blank(),
+                   axis.title.y=theme_blank(),
+                   axis.ticks.margin=unit(0,"npc"),
+                   axis.ticks.length=unit(0,"npc"),
+                   aspect.ratio=1,
+                   plot.margin = unit(c(-1,0,-1,1), "lines")
+                  ) 
 coord <- coord_cartesian(xlim = c(-40,40),ylim = c(-40,40))
+p.opts.nongeo <- opts(panel.grid.major=theme_blank(), 
+                      panel.grid.minor=theme_blank(), 
+                      panel.background=theme_blank(),
+                      strip.background=theme_blank(),
+                      legend.key=theme_blank(),
+                      plot.margin = unit(c(0,0,-1,1), "lines"),
+                      aspect.ratio=1
+                     ) 
+```
+
+```{r functions}
+##############################################
+# These are all the plotting functions!
+##############################################
+
+sightings.by.season.plot<-function(this.obs,p.opts){
+  season.plot<-list()
+  
+  # legend options
+  all.quants <- unique(quantile(unique(this.obs$size),seq(0,1,0.2)))
+  point.range <- c(1,4)
+  scales <- scale_size_continuous(breaks=all.quants,range=point.range)
+  
+  # make a unified legend
+  p.leg <- ggplot(this.obs)
+  p.leg <- p.leg + geom_point(aes(x=x,y=y,size=size),colour=point.colour)
+  p.leg <- p.leg + opts(keep = "legend_box",legend.position="bottom")
+  p.leg <- p.leg + labs(size="Group\nsize")
+  p.leg <- p.leg + scales + p.opts
+  g_legend<-function(a.gplot){
+    tmp <- ggplot_gtable(ggplot_build(a.gplot))
+    leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+    legend <- tmp$grobs[[leg]]
+    return(legend)
+  }
+  legend<-g_legend(p.leg)
+  rm(p.leg)
+  
+  # build the 4 seasonal plots
+  for(i in seq_along(names(season.cols))){
+    this.season <- this.obs[this.obs$Season==names(season.cols)[i],]
+    if(nrow(this.season)>0){
+      p <- ggplot(this.season)
+      p <- p + geom_polygon(aes(x=x,y=y,group=group),
+                                 colour=NA,fill=season.cols[i],data=coast) 
+      p <- p + geom_point(aes(x=x,y=y,size=size),colour=point.colour)
+      p <- p + scales
+    }else{
+      p <- ggplot(coast)
+      p <- p + geom_polygon(aes(x=x,y=y,group=group),
+                                colour=NA,fill=season.cols[i]) 
+    }  
+    p <- p + p.opts + xlab("") + ylab("") + coord + opts(legend.position = "none") 
+#    p<-p+opts(plot.margin = unit(c(-1,0,-1,1), "lines"))
+  
+    season.plot[[i]]<-p
+  }
+  
+  # actually plot them
+  grid.arrange(arrangeGrob(season.plot[[1]],season.plot[[2]],
+               season.plot[[3]],season.plot[[4]]),
+               legend,nrow=2,
+               heights=unit.c(unit(1, "npc") - legend$height, legend$height))
+}
+
+
+distance.hist.plot<-function(this.obs,p.opts){
+  p <- ggplot(this.obs)
+  p <- p + geom_histogram(aes(x=Bin,fill=Season))
+  p <- p + scale_color_manual(values=season.cols)
+  p <- p + p.opts + ylab("Number of observed groups")
+  p <- p+ opts(legend.position="bottom")
+  print(p)
+}
+
+groupsize.boxplot.plot<-function(this.obs,p.opts){
+  p <- ggplot(this.obs)
+  p <- p + geom_boxplot(aes(x=Season,y=size)) 
+  p <- p + p.opts + ylab("Observed group size") + xlab("")
+  print(p)
+}
+
+
+sitting.flying.plot<-function(this.obs,p.opts){
+  p <- ggplot(this.obs)
+  p <- p + geom_histogram(aes(x=Bin,fill=Location))
+  #p <- p + scale_color_manual(values=season.cols)
+  p <- p + p.opts + ylab("Number of observed groups")
+  p <- p+ opts(legend.position="bottom")
+  print(p)
+}
+```
+
+```{r table-functions}
+season.by.species.table<-function(this.obs){
+  season.by.species <- addmargins(table(this.obs[,c("Season","Species")]))
+  
+  # this is a stupid hack because the developer of xtable doesn't exist
+  print.this.xtable<-function(xt){
+    capped <- capture.output(print.xtable(xt))
+    cat(paste(capped[-c(1:2)],sep="\\n"))
+  }
+  
+  print.this.xtable(xtable(season.by.species[,colSums(season.by.species)>0]))
+}
 ```
 
 ``` {r species-choice}
 this.species <- "Alcid"
+this.species <- "Loon"
 
 # want to wrap this up in a loop one for each species
 this.obs <- obs[obs$Group==this.species,]
@@ -47,104 +154,26 @@ this.obs <- obs[obs$Group==this.species,]
 
 <title>`r this.species`</title>
 
+
 ```{r sightings-by-season, fig.cap="Sightings by season"}
-season.plot<-list()
+sightings.by.season.plot(this.obs,p.opts.geo)
+```
 
-# legend options
-all.quants <- unique(quantile(unique(this.obs$size),seq(0,1,0.2)))
-point.range <- c(1,4)
-scales <- scale_size_continuous(breaks=all.quants,range=point.range)
-
-# make a unified legend
-p.leg <- ggplot(this.obs)
-p.leg <- p.leg + geom_point(aes(x=x,y=y,size=size),colour=point.colour)
-p.leg <- p.leg + opts(keep = "legend_box",legend.position="bottom")
-p.leg <- p.leg + labs(size="Group\nsize")
-p.leg <- p.leg + scales + p.opts
-g_legend<-function(a.gplot){
-  tmp <- ggplot_gtable(ggplot_build(a.gplot))
-  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
-  legend <- tmp$grobs[[leg]]
-  return(legend)
-}
-legend<-g_legend(p.leg)
-rm(p.leg)
-
-# build the 4 seasonal plots
-for(i in seq_along(names(season.cols))){
-  this.season <- this.obs[this.obs$Season==names(season.cols)[i],]
-  if(nrow(this.season)>0){
-    p <- ggplot(this.season)
-    p <- p + geom_polygon(aes(x=x,y=y,group=group),
-                               colour=NA,fill=season.cols[i],data=coast) 
-    p <- p + geom_point(aes(x=x,y=y,size=size),colour=point.colour)
-    p <- p + scales
-  }else{
-    p <- ggplot(coast)
-    p <- p + geom_polygon(aes(x=x,y=y,group=group),
-                              colour=NA,fill=season.cols[i]) 
-  }  
-  p <- p + p.opts + xlab("") + ylab("") + coord + opts(legend.position = "none") 
-  p<-p+opts(plot.margin = unit(c(-1,0,-1,1), "lines"))
-
-  season.plot[[i]]<-p
-}
-
-# actually plot them
-grid.arrange(arrangeGrob(season.plot[[1]],season.plot[[2]],
-             season.plot[[3]],season.plot[[4]]),
-             legend,nrow=2,
-             heights=unit.c(unit(1, "npc") - legend$height, legend$height))
+```{r species-season,results='asis'}
+season.by.species.table(this.obs)
 ```
 
 ``` {r distance-hists, fig.cap="Observed distances"}
-p.opts <- opts(panel.grid.major=theme_blank(), 
-               panel.grid.minor=theme_blank(), 
-               panel.background=theme_blank(),
-               strip.background=theme_blank(),
-               legend.key=theme_blank(),
-               aspect.ratio=1
-              ) 
-p <- ggplot(this.obs)
-p <- p + geom_histogram(aes(x=Bin,fill=Season))
-p <- p + scale_color_manual(values=season.cols)
-p <- p + p.opts + ylab("Number of observed groups")
-p <- p+ opts(legend.position="bottom")
-print(p)
+distance.hist.plot(this.obs,p.opts.nongeo)
 ```
 
-
-
 ``` {r groupsize-boxplot, fig.cap="Group size by season"}
-
-p <- ggplot(this.obs)
-p <- p + geom_boxplot(aes(x=Season,y=size)) 
-p <- p + p.opts + ylab("Observed group size") + xlab("")
-print(p)
+groupsize.boxplot.plot(this.obs,p.opts.nongeo)
 ```
 
 ``` {r sitting-flying, fig.cap="Sitting vs. flying"} 
-p <- ggplot(this.obs)
-p <- p + geom_histogram(aes(x=Bin,fill=Location))
-#p <- p + scale_color_manual(values=season.cols)
-p <- p + p.opts + ylab("Number of observed groups")
-p <- p+ opts(legend.position="bottom")
-print(p)
+sitting.flying.plot(this.obs,p.opts.nongeo)
 ```
 
-```{r}
-## counts here means "sightings" not # of birds!
-#
-## group
-#table(obs[,c("Group")])
-#
-### year, season
-#table(obs[,c("Season","Year")])
-#
-#
-#
-### group, season, year
-#table(obs[,c("Season","Year","Group")])
-#
-```
+
 

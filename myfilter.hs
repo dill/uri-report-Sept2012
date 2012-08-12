@@ -23,7 +23,7 @@ addlabel (Para [Image xs (u, t)]) = RawBlock "latex"
           "\\end{figure}"])
 addlabel x=x
 
-
+-- remove code tags
 refs :: Inline -> Inline
 refs (Code attr code) 
      | otherwise = Str code
