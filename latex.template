@@ -1,5 +1,7 @@
 %!TEX TS-program = xelatex
-\documentclass[12pt,twocolumn]{scrartcl}  
+%\documentclass[12pt,twocolumn]{scrartcl}  
+\documentclass[10pt,twocolumn]{scrartcl}  
+%\documentclass[12pt,twocolumn,landscape]{scrartcl} 
 
 % The declaration of the document class:
 
@@ -10,47 +12,7 @@
 % and specify any options in square brackets.
 
 % (The previous line is a pseudo-comment, declaring that we will
-% use the special XeTeX machinery for its more extensive font list
-% and its use of unicode; 
-% in general, LaTeX 'comments' like this one
-%  begin with % and end with a linebreak.)
-
-% Note that there we have nothing in the nature of a template;
-% it's just a standard bit of LaTeX pandoc will copy unaltered into the 
-% LaTeX file it is writing.  But suppose you wrote something
-% more akin to the corresponding line in Pandoc's default 
-% latex.template file, say:
-
-% \documentclass$if(fontsize)$[$fontsize$]$endif${scrartcl}
-
-% then you would have invented a 'variable', fontsize, 
-% and could write things like 
-
-% `markdown2pdf my.txt --xetex --variable=fontsize:12pt -o my.pdf` or
-% `pandoc -r markdown -w html my.txt -s --xetex --variable=fontsize:24pt -o my.tex`. 
-
-% If we specified --variable-fontsize:12, then template substitution
-% would yield a LaTeX document beginning
-% \documentclass[12pt]{scrarcl}
-% which is just what we said anyway. 
-% But we could also specify a different fontsize.
-
-% I don't use this `--variable=....`functionality myself; 
-% I have a couple of basic templates I call with 
-% `--template=whatever.template` which I can also 
-% easily inspect to adjust things like font size as I please. 
-
-% While we are discussing the declaration of the document class...
-% here's an alternative command for two column landscape, 
-% not bad for some purposes. (If you strike the word 'landscape' 
-% you will have two narrow newspaperlike
-% columns; scientists like that, because irrationality must
-% show itself somewhere):
-%\documentclass[12pt,twocolumn,landscape]{scrartcl} 
-% Columns are too close together in LaTeX so we add this 
-% `columnsep` command:
-%\setlength{\columnsep}{.5in}
-
+% use the special XeTeX machinery
 
 % but these restrict you to old-fashioned LaTeX materials.
 % Note that Kieran Healy uses the swank 'Memoir' class, 
@@ -74,23 +36,11 @@
 
 % Margins, etc:
 \usepackage{geometry}
-\geometry{verbose,letterpaper,tmargin=1cm,bmargin=1cm,lmargin=2cm,rmargin=2cm}
+\geometry{verbose,letterpaper,tmargin=1cm,bmargin=1cm,lmargin=1cm,rmargin=1cm}
 
 
 % Font:
-% Here I set my main font, which is an Apple Corporation Exclusive, golly. 
-
-% \setmainfont{Hoefler Text}
 \setmainfont{Helvetica}
-% \setromanfont[Mapping=tex-text,Contextuals={NoWordInitial,NoWordFinal,NoLineInitial,NoLineFinal},Ligatures={NoCommon}]{Hoefler Text}
-
-% Hoefler Text is okay, but note the long discussion of 'contextuals' which is necessary to cools off 
-% some of its show-offy properties. (You can make your essay look like the 
-% Declaration of Independence by specifying e.g. Ligatures={Rare} )
-% If you have a copy you might try it; as it is
-% I will comment it out and supply something more certain to be around:
-
-%\setmainfont{Times Roman}
 
 % Properly one should specify a sanserif font and a monospace font
 % see e.g. the example of Kieran Healy:
@@ -251,36 +201,6 @@ $if(numbersections)$
 $else$
 \setcounter{secnumdepth}{0}
 $endif$
-
-% Title, authors, date.
-% If you specified title authors and date at the start of 
-% your pandoc-markdown file, pandoc knows the 'values' of the
-% variables: title authors date and fills them in.
-
-$if(title)$
-\title{$title$}
-$endif$
-\author{$for(author)$$author$$sep$\\$endfor$}
-$if(date)$
-\date{$date$}
-$endif$
-
-% At last: 
-% The document itself!:
-
-% After filling in all these blanks above, or erasing them 
-% where they are not needed, Pandoc has finished writing the 
-% famous LaTeX *preamble* for your document.
-% Now comes the all-important command \begin{document}
-% which as you can see, will be paired with an \end{document} at the end.
-% Pandoc knows whether you have a title, and has already
-% specified what it is; if so, it demands that the title be rendered.  
-% Pandoc knows whether you want a table of contents, you
-% specify this on the command line.
-% Then, after fiddling with alignments, there comes the real
-% business: pandoc slaps its rendering of your text in the place of
-% the variable `body`
-% It then concludes the document it has been writing. 
 
 \begin{document}
 

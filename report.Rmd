@@ -1,4 +1,4 @@
-`r opts_chunk$set(fig.width=4, fig.height=4, fig.path='report-figs/', cache.path='report-cache/',echo=FALSE,results='hide',dev='pdf')`
+`r opts_chunk$set(fig.width=3, fig.height=3, fig.path='report-figs/', cache.path='report-cache/',echo=FALSE,results='hide',dev='pdf')`
 
 ``` {r preamble}
 suppressPackageStartupMessages(library(ggplot2))
@@ -99,7 +99,8 @@ sightings.by.season.plot<-function(this.obs,p.opts){
   grid.arrange(arrangeGrob(season.plot[[1]],season.plot[[2]],
                season.plot[[3]],season.plot[[4]]),
                legend,nrow=2,
-               heights=unit.c(unit(1, "npc") - legend$height, legend$height))
+               heights=unit.c(unit(1, "npc") - legend$height, legend$height))#,
+#               main="blah?")
 }
 
 
@@ -144,35 +145,43 @@ season.by.species.table<-function(this.obs){
 }
 ```
 
-``` {r species-choice}
-this.species <- "Alcid"
-this.species <- "Loon"
+``` {r bigloop, results="asis", cache=TRUE, fig.cap=""} 
+for(this.species in c("Alcid","Loon")){
 
-# want to wrap this up in a loop one for each species
-this.obs <- obs[obs$Group==this.species,]
-```
+  this.obs <- obs[obs$Group==this.species,]
 
-<title>`r this.species`</title>
+  #cat("<title>",this.species,"</title>\n")
+  cat("#",this.species,"\n\n")
 
 
-```{r sightings-by-season, fig.cap="Sightings by season"}
-sightings.by.season.plot(this.obs,p.opts.geo)
-```
+  cat("## Sightings by season\n")
 
-```{r species-season,results='asis'}
-season.by.species.table(this.obs)
-```
+  sightings.by.season.plot(this.obs,p.opts.geo)
+  cat("\n\n")
+  cat("## Observed distances\n")
 
-``` {r distance-hists, fig.cap="Observed distances"}
-distance.hist.plot(this.obs,p.opts.nongeo)
-```
+  distance.hist.plot(this.obs,p.opts.nongeo)
+  cat("\n\n")
 
-``` {r groupsize-boxplot, fig.cap="Group size by season"}
-groupsize.boxplot.plot(this.obs,p.opts.nongeo)
-```
+  cat("## Group size by season\n")
 
-``` {r sitting-flying, fig.cap="Sitting vs. flying"} 
-sitting.flying.plot(this.obs,p.opts.nongeo)
+  groupsize.boxplot.plot(this.obs,p.opts.nongeo)
+  cat("\n\n")
+
+  cat("## Sitting vs. flying\n")
+
+  sitting.flying.plot(this.obs,p.opts.nongeo)
+  cat("\n\n")
+
+  cat("## Species by season\n")
+
+  season.by.species.table(this.obs)
+  cat("\n\n")
+
+
+  cat("\\newpage")
+  cat("\n")
+}
 ```
 
 
