@@ -1,6 +1,7 @@
 %!TEX TS-program = xelatex
 %\documentclass[12pt,twocolumn]{scrartcl}  
-\documentclass[10pt,twocolumn]{scrartcl}  
+%\documentclass[10pt,twocolumn]{scrartcl}  
+\documentclass[10pt,twocolumn]{report}  
 %\documentclass[12pt,twocolumn,landscape]{scrartcl} 
 
 % The declaration of the document class:
@@ -50,24 +51,6 @@
 
 % But I hate sanserif fonts, and anyway there are defaults.
 
-
-
-% Heading styles:
-% These commands keep the koma system from making stupid sans serif section headings
-%\setkomafont{title}{\rmfamily\mdseries\upshape\normalsize}
-%\setkomafont{sectioning}{\rmfamily\mdseries\upshape\normalsize}
-%\setkomafont{descriptionlabel}{\rmfamily\mdseries\upshape\normalsize}
-
-
-
-% I'm puzzled why I have this foonote speciality, 
-% I wonder if it's part of my problem I've been having, but wont look
-% into it now. 
-%\usepackage[flushmargin]{footmisc} 
-% \usepackage[hang,flushmargin]{footmisc}
-
-
-% So much for my personal template.
 
 
 % Everything that follows is copied from the pandoc default template:
@@ -192,7 +175,8 @@ $endif$
 %  left aligns the text
 \usepackage[labelformat=empty, justification=raggedright, position=top]{caption}
 
-
+\usepackage{float}
+\usepackage[section]{placeins}
 
 % Section numbering.  
 % Here again is a variable you can specify on the commandline

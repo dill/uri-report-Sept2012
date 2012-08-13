@@ -17,9 +17,9 @@ main = interact $ jsonFilter $ bottomUp addlabel . bottomUp refs
 addlabel :: Block -> Block
 addlabel (Para [Image xs (u, t)]) = RawBlock "latex"
           (concat [
-          "\\begin{figure}[!H]\n",
-          "\\caption{" , (stringify xs) , "}\n" ,
-          "\\includegraphics{" , u , "}\n" ,
+          "\\begin{figure}[H]\n",
+--          "\\caption{" , (stringify xs) , "}\n" ,
+          "\\includegraphics{" , u , "}\n",
           "\\end{figure}"])
 addlabel x=x
 
