@@ -139,12 +139,19 @@ sitting.flying.plot<-function(this.obs,p.opts){
 
 ```{r table-functions}
 season.by.species.table<-function(this.obs){
-  season.by.species <- addmargins(table(this.obs[,c("Season","Species")]))
+  season.by.species <- table(this.obs[,c("Season","Species")])
+
+  if(nrow(season.by.species)>1){
+    season.by.species <- addmargins(season.by.species)
+  }
   
   # this is a stupid hack because the developer of xtable doesn't exist
   print.this.xtable<-function(xt){
     capped <- capture.output(print.xtable(xt))
-    cat(paste(capped[-c(1:2)],sep="\\n"))
+    capped <- capped[-c(1:2)]
+    capped[1] <- "\\begin{table*}[b]"
+    capped[length(capped)] <- "\\end{table*}"
+    cat(paste(capped,sep="\\n"))
   }
   
   print.this.xtable(xtable(season.by.species[,colSums(season.by.species)>0]))
@@ -152,50 +159,27 @@ season.by.species.table<-function(this.obs){
 ```
 
 ``` {r bigloop, results="asis", fig.cap=""} 
-for(this.species in c("Alcid","Loon")){
+#for(this.species in c("Alcid","Loon")){
+for(this.species in levels(obs$Group)){
 
   this.obs <- obs[obs$Group==this.species,]
 
-  #cat("<title>",this.species,"</title>\n")
-  #cat("#",this.species,"\n\n")
-  cat("\\section{",this.species,"}\n\n")
+  #cat("\\section{",this.species,"}\n\n")
 
-
-  #cat("## Sightings by season")
-#  cat("\\section{Sightings by season}")
 
   sightings.by.season.plot(this.obs,p.opts.geo)
 
-#  cat("\n\n")
-
-  #cat("## Observed distances\n")
-#  cat("\\section{Observed distances}\n")
-
   distance.hist.plot(this.obs,p.opts.nongeo)
-#  cat("\n\n")
-
-
-  #cat("## Group size by season\n")
-#  cat("\\section{Group size by season}\n")
 
   groupsize.boxplot.plot(this.obs,p.opts.nongeo)
-#  cat("\n\n")
-
-  #cat("## Sitting vs. flying\n")
-#  cat("\\section{Sitting vs. flying}\n")
 
   sitting.flying.plot(this.obs,p.opts.nongeo)
-#  cat("\n\n")
-
-  #cat("## Species by season\n")
-#  cat("\\section{Species by season}\n")
 
   season.by.species.table(this.obs)
-#  cat("\n\n")
-
 
   cat("\\newpage")
-  cat("\n")
+  cat("\\section{",this.species,"}\n\n")
+#  cat("\n")
 }
 ```
 
