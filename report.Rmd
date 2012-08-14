@@ -1,187 +1,19 @@
+`r opts_knit$set(progress=FALSE,verbose=FALSE)`
 `r opts_chunk$set(fig.width=3.5, fig.height=3.5, fig.path='report-figs/', cache.path='report-cache/',echo=FALSE,results='hide',dev='pdf')`
 
-``` {r preamble}
-suppressPackageStartupMessages(library(ggplot2))
-suppressPackageStartupMessages(library(grid))
-suppressPackageStartupMessages(library(gridExtra))
-suppressPackageStartupMessages(library(xtable))
-#library(vcd)
 
+``` {r looper, message=FALSE, error=FALSE,warning=FALSE}
 load("uri-lt-data.RData")
-
-# colours for the seasons
-season.cols<-c("Winter" = rgb(166, 189, 219,max=255),
-               "Summer" = rgb(254, 196, 79,max=255),
-               "Spring" = rgb(49, 163, 84,max=255),
-               "Fall" = rgb(227, 74, 51,max=255))
-```
-
-``` {r ggplot-geo-opts}
-point.colour <- rgb(206, 18, 86,max=255)
-land.colour <- rgb(44, 162, 95,max=255)
-sea.colour <- rgb(43,140,190,max=255)
-
-p.opts.geo <- opts(panel.grid.major=theme_blank(), 
-                   panel.grid.minor=theme_blank(), 
-                   panel.background=theme_rect(fill=sea.colour,colour=NA),
-                   strip.background=theme_blank(),
-                   legend.key=theme_blank(),
-                   axis.ticks=theme_blank(),
-                   axis.text.x=theme_blank(),
-                   axis.text.y=theme_blank(),
-                   axis.title.x=theme_blank(),
-                   axis.title.y=theme_blank(),
-                   axis.ticks.margin=unit(0,"npc"),
-                   axis.ticks.length=unit(0,"npc"),
-                   aspect.ratio=1,
-                   plot.margin = unit(c(0.5,0,-1,1), "lines")
-                  ) 
-coord <- coord_cartesian(xlim = c(-40,40),ylim = c(-40,40))
-p.opts.nongeo <- opts(panel.grid.major=theme_blank(), 
-                      panel.grid.minor=theme_blank(), 
-                      panel.background=theme_blank(),
-                      strip.background=theme_blank(),
-                      legend.key=theme_blank(),
-                      plot.margin = unit(c(0,0,-1,1), "lines"),
-                      aspect.ratio=1
-                     ) 
-```
-
-```{r functions}
-##############################################
-# These are all the plotting functions!
-##############################################
-
-sightings.by.season.plot<-function(this.obs,p.opts){
-  season.plot<-list()
-  
-  # legend options
-  all.quants <- unique(quantile(unique(this.obs$size),seq(0,1,0.2)))
-  point.range <- c(1,4)
-  scales <- scale_size_continuous(breaks=all.quants,range=point.range)
-  
-  # make a unified legend
-  p.leg <- ggplot(this.obs)
-  p.leg <- p.leg + geom_point(aes(x=x,y=y,size=size),colour=point.colour)
-  p.leg <- p.leg + opts(keep = "legend_box",legend.position="bottom")
-  p.leg <- p.leg + labs(size="Group\nsize")
-  p.leg <- p.leg + scales + p.opts
-  g_legend<-function(a.gplot){
-    tmp <- ggplot_gtable(ggplot_build(a.gplot))
-    leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
-    legend <- tmp$grobs[[leg]]
-    return(legend)
-  }
-  legend<-g_legend(p.leg)
-  rm(p.leg)
-  
-  # build the 4 seasonal plots
-  for(i in seq_along(names(season.cols))){
-    this.season <- this.obs[this.obs$Season==names(season.cols)[i],]
-    if(nrow(this.season)>0){
-      p <- ggplot(this.season)
-      p <- p + geom_polygon(aes(x=x,y=y,group=group),
-                                 colour=NA,fill=season.cols[i],data=coast) 
-      p <- p + geom_point(aes(x=x,y=y,size=size),colour=point.colour)
-      p <- p + scales
-    }else{
-      p <- ggplot(coast)
-      p <- p + geom_polygon(aes(x=x,y=y,group=group),
-                                colour=NA,fill=season.cols[i]) 
-    }  
-    p <- p + p.opts + xlab("") + ylab("") + coord + opts(legend.position = "none") 
-  
-    season.plot[[i]]<-p
-  }
-  
-  # actually plot them
-  grid.arrange(arrangeGrob(season.plot[[1]],season.plot[[2]],
-                     season.plot[[3]],season.plot[[4]]),
-                     legend,nrow=2,
-                     heights=unit.c(unit(1, "npc") - legend$height, 
-                                    legend$height),
-               main=textGrob("Sightings per season",gp=gpar(cex=1.2)))
-
-
-
-}
-
-
-distance.hist.plot<-function(this.obs,p.opts){
-  p <- ggplot(this.obs)
-  p <- p + geom_histogram(aes(x=Bin,fill=Season))
-  p <- p + scale_color_manual(values=season.cols)
-  p <- p + p.opts + ylab("Number of observed groups")
-  p <- p+ opts(legend.position="bottom")
-  p <- p+ opts(title="Observed distances")
-  print(p)
-}
-
-groupsize.boxplot.plot<-function(this.obs,p.opts){
-  p <- ggplot(this.obs)
-  p <- p + geom_boxplot(aes(x=Season,y=size)) 
-  p <- p + p.opts + ylab("Observed group size") + xlab("")
-  p <- p+ opts(title="Group size by season")
-  print(p)
-}
-
-
-sitting.flying.plot<-function(this.obs,p.opts){
-  p <- ggplot(this.obs)
-  p <- p + geom_histogram(aes(x=Bin,fill=Location))
-  #p <- p + scale_color_manual(values=season.cols)
-  p <- p + p.opts + ylab("Number of observed groups")
-  p <- p+ opts(legend.position="bottom")
-  p <- p+ opts(title="Sitting vs. flying")
-  print(p)
-}
-```
-
-```{r table-functions}
-season.by.species.table<-function(this.obs){
-  season.by.species <- table(this.obs[,c("Season","Species")])
-
-  if(nrow(season.by.species)>1){
-    season.by.species <- addmargins(season.by.species)
-  }
-  
-  # this is a stupid hack because the developer of xtable doesn't exist
-  print.this.xtable<-function(xt){
-    capped <- capture.output(print.xtable(xt))
-    capped <- capped[-c(1:2)]
-    capped[1] <- "\\begin{table*}[b]"
-    capped[length(capped)] <- "\\end{table*}"
-    cat(paste(capped,sep="\\n"))
-  }
-  
-  print.this.xtable(xtable(season.by.species[,colSums(season.by.species)>0]))
-}
-```
-
-``` {r bigloop, results="asis", fig.cap=""} 
-#for(this.species in c("Alcid","Loon")){
+out<-c()
 for(this.species in levels(obs$Group)){
+#for(this.species in c("Alcid","Loon")){
+  out <- c(out, knit_child('driver.Rmd', sprintf('driver-%s.tex', this.species)))
 
-  this.obs <- obs[obs$Group==this.species,]
-
-  #cat("\\section{",this.species,"}\n\n")
-
-
-  sightings.by.season.plot(this.obs,p.opts.geo)
-
-  distance.hist.plot(this.obs,p.opts.nongeo)
-
-  groupsize.boxplot.plot(this.obs,p.opts.nongeo)
-
-  sitting.flying.plot(this.obs,p.opts.nongeo)
-
-  season.by.species.table(this.obs)
-
-  cat("\\newpage")
-  cat("\\section{",this.species,"}\n\n")
-#  cat("\n")
 }
 ```
 
+``` {r write-results, echo=FALSE, results='asis'}
+cat(out, sep = '\n')
+```
 
 
