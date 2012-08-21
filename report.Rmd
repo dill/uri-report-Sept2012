@@ -2,13 +2,14 @@
 `r opts_chunk$set(fig.width=3.5, fig.height=3.5, fig.path='report-figs/', cache.path='report-cache/',echo=FALSE,results='hide',dev='pdf')`
 
 
-``` {r looper, message=FALSE, error=FALSE,warning=FALSE}
+
+
+
+``` {r lt-looper, message=FALSE, error=FALSE,warning=FALSE}
 load("uri-lt-data.RData")
 out<-c()
 for(this.species in levels(obs$Group)){
-#for(this.species in c("Alcid","Loon")){
-  out <- c(out, knit_child('driver.Rmd', sprintf('driver-%s.tex', this.species)))
-
+  out <- c(out, knit_child('lt-driver.Rmd', sprintf('lt-driver-%s.tex', this.species)))
 }
 ```
 
