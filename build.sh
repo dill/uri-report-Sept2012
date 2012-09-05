@@ -9,13 +9,13 @@ R -e 'library(knitr);knit("report.Rmd")'
 #pandoc -s -o report.tex report.md --template latex.template
 # this is a fudge to get the captions above the figures
 #  see myfilter.hs for details
-pandoc -t json report.md | ./myfilter | pandoc -s -f json -t latex --template latex.template -o report.tex
-#pandoc -t json report.md | pandoc -s -f json -t latex --template latex.template -o report.tex
+#pandoc -t json report.md | ./myfilter | pandoc -s -f json -t latex --template latex.template -o report.tex
+##pandoc -t json report.md | pandoc -s -f json -t latex --template latex.template -o report.tex
+#
+## finally, compile the LaTeX
+#xelatex report.tex
+#
+##open the file up!
+#open report.pdf
 
-# finally, compile the LaTeX
-xelatex report.tex
-
-
-#open the file up!
-open report.pdf
-
+pandoc -t json report.md | ./myfilter | pandoc -s -f json -t latex --template latex.template | pandoc -s -f latex -t docx -o report.docx
